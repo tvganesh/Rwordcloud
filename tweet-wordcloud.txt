@@ -1,0 +1,115 @@
+﻿library("ROAuth")
+library("twitteR")
+library("wordcloud")
+library("tm")
+library("ggplot2")
+download.file(url="http://curl.haxx.se/ca/cacert.pem", destfile="cacert.pem")
+# Set up the handshake with Twitter
+options(RCurlOptions = list(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl")))
+require(twitteR)
+reqURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+
+# Enter API key and secret
+apiKey <- "Your API key here"
+apiSecret <- "Your API secret here"
+
+# Setup credentials
+twitCred <- OAuthFactory$new(consumerKey=apiKey,consumerSecret=apiSecret,requestURL=reqURL,accessURL=accessURL,authURL=authURL)
+
+# Perform handshake
+twitCred$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+To enable the connection, please direct your web browser to: 
+https://api.twitter.com/oauth/authorize?oauth_token=5jzBXdUAUgGrbEJmlH57fGPAYyGXOqzsTqzgxkXSIw
+When complete, record the PIN given to you and provide it here: 4751632
+registerTwitterOAuth(twitCred)
+
+#Search Twitter for the hashtag #NaMo
+r_stats<- searchTwitter("#NaMo",n=500, cainfo="cacert.pem")
+
+# Save text
+r_stats_text <- sapply(r_stats, function(x) x$getText())
+
+# Create a corpus
+r_stats_text_corpus <- Corpus(VectorSource(r_stats_text))
+
+# Clean up the text
+r_stats_text_corpus <- tm_map(r_stats_text_corpus, tolower) 
+r_stats_text_corpus <- tm_map(r_stats_text_corpus, removePunctuation)
+r_stats_text_corpus <- tm_map(r_stats_text_corpus, function(x)removeWords(x,stopwords()))
+
+# Now create a word cloud
+wordcloud(r_stats_text_corpus)
+
+
+# Determine the tweets for #NaMo in the last 7 days
+tweets <- list()
+#Search the last 7 days for the hashtag #NaMo everyday
+dates <- paste("2014-03-",10:17,sep="") # need to go to 18th to catch tweets from 17th
+for (i in 2:length(dates)) {
+  print(paste(dates[i-1], dates[i]))
+  tweets <- c(tweets, searchTwitter("#Namo", since=dates[i-1], until=dates[i], n=1500))
+}
+
+# Create a dataframe from the tweets
+tweets <- twListToDF(tweets)
+tweets <- unique(tweets)
+
+#Plot the frequency of tweets in 2 hour windows
+minutes <- 120
+ggplot(data=tweets, aes(x=created)) + 
+geom_bar(aes(fill=..count..), binwidth=60*minutes) + 
+scale_x_datetime("Date") + 
+scale_y_continuous("Frequency") +
+opts(title="#NaMo Tweet Frequency March 11-17", legend.position='none')
+ggsave(file='NaMo-frequency.png', width=7, height=7, dpi=100)
+
+# Determine the tweets for #AAP in the last 7 days
+tweets <- list()
+#Search the last 7 days for the hashtag #NaMo everyday
+dates <- paste("2014-03-",10:17,sep="") # need to go to 18th to catch tweets from 17th
+for (i in 2:length(dates)) {
+  print(paste(dates[i-1], dates[i]))
+  tweets <- c(tweets, searchTwitter("#AAP", since=dates[i-1], until=dates[i], n=1500))
+}
+
+# Create a dataframe from the tweets
+tweets <- twListToDF(tweets)
+tweets <- unique(tweets)
+
+#Plot the frequency of tweets tweets in 2 hour windows
+minutes <- 120
+ggplot(data=tweets, aes(x=created)) + 
+geom_bar(aes(fill=..count..), binwidth=60*minutes) + 
+scale_x_datetime("Date") + 
+scale_y_continuous("Frequency") +
+opts(title="#AAP Tweet Frequency Mar 11-17", legend.position='none')
+ggsave(file='AAP-frequency.png', width=7, height=7, dpi=100)
+
+# Determine the tweets for #RaGa in the last 7 days
+tweets <- list()
+#Search the last 7 days for the hashtag #NaMo everyday
+dates <- paste("2014-03-",10:17,sep="") # need to go to 18th to catch tweets from 17th
+for (i in 2:length(dates)) {
+  print(paste(dates[i-1], dates[i]))
+  tweets <- c(tweets, searchTwitter("#RaGa", since=dates[i-1], until=dates[i], n=1500))
+}
+
+# Create a dataframe from the tweets
+tweets <- twListToDF(tweets)
+tweets <- unique(tweets)
+
+#Plot the frequency of tweets tweets in 2 hour windows
+minutes <- 120
+ggplot(data=tweets, aes(x=created)) + 
+geom_bar(aes(fill=..count..), binwidth=60*minutes) + 
+scale_x_datetime("Date") + 
+scale_y_continuous("Frequency") +
+opts(title="#RaGa Tweet Frequency Mar 11-17", legend.position='none')
+ggsave(file='RaGa-frequency.png', width=7, height=7, dpi=100)
+
+
+
+
+
